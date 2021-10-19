@@ -21,6 +21,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
+      darkTheme: ThemeData.dark(),
       home: const MyHomePage(title: 'QRコードジェネレータ'),
     );
   }
@@ -114,30 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       ],
                     ),
                     const SizedBox(
-                      height: 20,
-                    ),
-                    Row(
-                      children: [
-                        ElevatedButton(
-                            child: const Text('QRコードの色を選択'),
-                            onPressed: () async {
-                              Color color = await showColorPickerDialog();
-                              setState(() {
-                                fgColor = color;
-                              });
-                            }),
-                        const SizedBox(
-                          width: 20,
-                        ),
-                        ElevatedButton(
-                            child: const Text('背景色を選択'),
-                            onPressed: () async {
-                              Color color = await showColorPickerDialog();
-                              setState(() {
-                                bgColor = color;
-                              });
-                            })
-                      ],
+                      height: 10,
                     ),
                     Row(
                       children: [
@@ -176,7 +154,33 @@ class _MyHomePageState extends State<MyHomePage> {
                           }).toList(),
                         ),
                       ],
-                    )
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      children: [
+                        ElevatedButton(
+                            child: const Text('QRコードの色を選択'),
+                            onPressed: () async {
+                              Color color = await showColorPickerDialog();
+                              setState(() {
+                                fgColor = color;
+                              });
+                            }),
+                        const SizedBox(
+                          width: 20,
+                        ),
+                        ElevatedButton(
+                            child: const Text('背景色を選択'),
+                            onPressed: () async {
+                              Color color = await showColorPickerDialog();
+                              setState(() {
+                                bgColor = color;
+                              });
+                            })
+                      ],
+                    ),
                   ],
                 ),
               ),
