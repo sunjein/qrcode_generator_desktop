@@ -1,11 +1,16 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:clipboard/clipboard.dart';
 
 void main() {
   runApp(const MyApp());
@@ -44,6 +49,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Color pickerColor = Colors.red;
   String dropdownValue = '15%';
   int errorcorrectlevel = QrErrorCorrectLevel.M;
+  final controller = ScreenshotController();
 
   void changeColor(Color color) {
     setState(() => pickerColor = color);
@@ -191,13 +197,16 @@ class _MyHomePageState extends State<MyHomePage> {
                   padding: const EdgeInsets.all(18.0),
                   child: Column(
                     children: [
-                      QrImage(
-                        data: text,
-                        version: QrVersions.auto,
-                        foregroundColor: fgColor,
-                        backgroundColor: bgColor,
-                        errorCorrectionLevel: errorcorrectlevel,
-                        //size: 200.0,
+                      Screenshot(
+                        controller: controller,
+                        child: QrImage(
+                          data: text,
+                          version: QrVersions.auto,
+                          foregroundColor: fgColor,
+                          backgroundColor: bgColor,
+                          errorCorrectionLevel: errorcorrectlevel,
+                          //size: 200.0,
+                        ),
                       ),
                       const SizedBox(
                         height: 10,
@@ -206,7 +215,36 @@ class _MyHomePageState extends State<MyHomePage> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           TextButton(
-                            onPressed: () {},
+                            onPressed: () async {
+                              String? outputFile =
+                                  await FilePicker.platform.saveFile(
+                                dialogTitle: 'ファイルの保存先を選択',
+                                fileName: 'QRコード.png',
+                              );
+
+                              if (outputFile != null) {
+                                // !応急処置！path_providerとかで正しくファイル名等を取得する
+                                print(outputFile);
+                                var filepathList = outputFile.split('/');
+                                print(filepathList);
+                                String filename =
+                                    filepathList[filepathList.length - 1];
+                                print(filename);
+                                filepathList[filepathList.length - 1] = '';
+                                print(filepathList);
+                                var filepath = filepathList.join('/');
+                                print(filepath);
+                                await controller.captureAndSave(filepath,
+                                    fileName: filename);
+                              }
+                              //var _image = MemoryImage(image!);
+                              //var picturesPath = await getPicturesPath();
+                              //var thetaImage = await File(join(
+                              //        picturesPath, 'theta_images', 'test'))
+                              //    .create(recursive: true);
+                              //await thetaImage
+                              //    .writeAsBytes();
+                            },
                             child: const Text('画像を保存する'),
                           ),
                         ],
