@@ -1,16 +1,10 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:qrcode/main_model.dart';
 import 'package:screenshot/screenshot.dart';
-import 'package:clipboard/clipboard.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,35 +21,36 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       darkTheme: ThemeData.dark(),
-      home: const MyHomePage(title: 'QRコードジェネレータ'),
+      debugShowCheckedModeBanner: false,
+      home: ChangeNotifierProvider(
+        create: (context) => MainModel(),
+        child: MyHomePage(),
+      ),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  final String title;
-
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String text = '';
-  final urlController = TextEditingController();
-  Color fgColor = Colors.black;
-  Color bgColor = Colors.white;
-  Color pickerColor = Colors.red;
-  String dropdownValue = '15%';
-  int errorcorrectlevel = QrErrorCorrectLevel.M;
+  final TextEditingController urlController = TextEditingController();
   final controller = ScreenshotController();
+  Color pickerColor = Colors.red;
 
   void changeColor(Color color) {
-    setState(() => pickerColor = color);
+    setState(() {
+      pickerColor = color;
+    });
   }
 
-  Future<Color> showColorPickerDialog() async {
+  void pickFgColor() async {
+    Color color = await showColorPickerDialog(context);
+  }
+
+  Future<Color> showColorPickerDialog(BuildContext context) async {
     Color color = await showDialog(
         builder: (context) => AlertDialog(
               title: const Text('色を選択してください'),
@@ -83,9 +78,17 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final text = context.select((MainModel model) => model.text);
+    final dropdownValue =
+        context.select((MainModel model) => model.dropdownValue);
+    final fgColor = context.select((MainModel model) => model.fgColor);
+    final bgColor = context.select((MainModel model) => model.bgColor);
+    final errorcorrectlevel =
+        context.select((MainModel model) => model.errorcorrectlevel);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: const Text('QR Code Generator'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -112,9 +115,9 @@ class _MyHomePageState extends State<MyHomePage> {
                         ),
                         ElevatedButton(
                           onPressed: () {
-                            setState(() {
-                              text = urlController.text;
-                            });
+                            context
+                                .read<MainModel>()
+                                .updateText(urlController.text);
                           },
                           child: const Text('生成'),
                         ),
@@ -135,21 +138,9 @@ class _MyHomePageState extends State<MyHomePage> {
                         DropdownButton<String>(
                           value: dropdownValue,
                           onChanged: (String? newValue) {
-                            setState(() {
-                              dropdownValue = newValue!;
-                              if (newValue == '7%') {
-                                errorcorrectlevel = QrErrorCorrectLevel.L;
-                              }
-                              if (newValue == '15%') {
-                                errorcorrectlevel = QrErrorCorrectLevel.M;
-                              }
-                              if (newValue == '25%') {
-                                errorcorrectlevel = QrErrorCorrectLevel.Q;
-                              }
-                              if (newValue == '30%') {
-                                errorcorrectlevel = QrErrorCorrectLevel.H;
-                              }
-                            });
+                            context
+                                .read<MainModel>()
+                                .updateErrorCorrectLevel(newValue!);
                           },
                           items: <String>['7%', '15%', '25%', '30%']
                               .map<DropdownMenuItem<String>>((String value) {
@@ -169,10 +160,9 @@ class _MyHomePageState extends State<MyHomePage> {
                         ElevatedButton(
                             child: const Text('QRコードの色を選択'),
                             onPressed: () async {
-                              Color color = await showColorPickerDialog();
-                              setState(() {
-                                fgColor = color;
-                              });
+                              Color color =
+                                  await showColorPickerDialog(context);
+                              context.read<MainModel>().updateFgColor(color);
                             }),
                         const SizedBox(
                           width: 20,
@@ -180,10 +170,9 @@ class _MyHomePageState extends State<MyHomePage> {
                         ElevatedButton(
                             child: const Text('背景色を選択'),
                             onPressed: () async {
-                              Color color = await showColorPickerDialog();
-                              setState(() {
-                                bgColor = color;
-                              });
+                              Color color =
+                                  await showColorPickerDialog(context);
+                              context.read<MainModel>().updateBgColor(color);
                             })
                       ],
                     ),
