@@ -46,7 +46,6 @@ class MainModel extends ChangeNotifier {
       dialogTitle: 'ファイルの保存先を選択',
       fileName: 'QRコード.png',
     );
-
     if (outputFile != null) {
       // !応急処置！path_providerとかで正しくファイル名等を取得する
       var filepathList = outputFile.split('/');

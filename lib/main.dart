@@ -44,17 +44,34 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController urlController = TextEditingController();
   final controller = ScreenshotController();
-  //Color pickerColor = Colors.red;
+  final dropdownValue = '7%';
 
   @override
   Widget build(BuildContext context) {
     final text = context.select((MainModel model) => model.text);
-    final dropdownValue =
-        context.select((MainModel model) => model.dropdownValue);
     final fgColor = context.select((MainModel model) => model.fgColor);
     final bgColor = context.select((MainModel model) => model.bgColor);
     final errorcorrectlevel =
         context.select((MainModel model) => model.errorcorrectlevel);
+
+    showSimpleDialog(String title, String content) async {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return ContentDialog(
+            title: Text(title),
+            content: Text(content),
+            actions: [
+              Button(
+                  child: const Text('OK'),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  })
+            ],
+          );
+        },
+      );
+    }
 
     Future showColorPicker() async {
       Widget _colorButton(Color color) {
@@ -196,6 +213,11 @@ class _MyHomePageState extends State<MyHomePage> {
                             child: const Text('QRコードの色を選択'),
                             onPressed: () async {
                               final color = await showColorPicker();
+                              if (bgColor == color) {
+                                showSimpleDialog('警告',
+                                    'QRコードの色が背景色と同じまたは非常に近いため、正常に認識できない可能性があります。');
+                                // color warning
+                              }
                               context.read<MainModel>().updateFgColor(color);
                             }),
                         const SizedBox(
@@ -216,6 +238,10 @@ class _MyHomePageState extends State<MyHomePage> {
                             child: const Text('背景色を選択'),
                             onPressed: () async {
                               final color = await showColorPicker();
+                              if (fgColor == color) {
+                                showSimpleDialog('警告',
+                                    'QRコードの色が背景色と同じまたは非常に近いため、正常に認識できない可能性があります。');
+                              }
                               context.read<MainModel>().updateBgColor(color);
                             })
                       ],
@@ -248,27 +274,12 @@ class _MyHomePageState extends State<MyHomePage> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           IconButton(
-                            icon: Icon(FluentIcons.save),
+                            icon: const Icon(FluentIcons.save),
                             onPressed: () async {
                               await context
                                   .read<MainModel>()
                                   .saveToFile(controller);
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return ContentDialog(
-                                    title: const Text('保存'),
-                                    content: const Text('QRコードをファイルに保存しました。'),
-                                    actions: [
-                                      Button(
-                                          child: const Text('OK'),
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                          })
-                                    ],
-                                  );
-                                },
-                              );
+                              showSimpleDialog('保存', 'QRコード画像の保存が完了しました。');
                             },
                           ),
                         ],
