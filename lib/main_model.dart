@@ -14,7 +14,7 @@ class MainModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateFgColor(Color newcolor) {
+  void updateFgColor(Color newcolor) async {
     fgColor = newcolor;
     notifyListeners();
   }

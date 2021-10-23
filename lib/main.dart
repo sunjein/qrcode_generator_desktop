@@ -1,11 +1,8 @@
 import 'dart:io';
-import 'dart:ui';
 
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/material.dart';
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:qrcode/main_model.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:window_size/window_size.dart';
@@ -28,7 +25,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return FluentApp(
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
       home: ChangeNotifierProvider(
@@ -47,43 +44,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController urlController = TextEditingController();
   final controller = ScreenshotController();
-  Color pickerColor = Colors.red;
-
-  void changeColor(Color color) {
-    setState(() {
-      pickerColor = color;
-    });
-  }
-
-  void pickFgColor() async {
-    Color color = await showColorPickerDialog(context);
-  }
-
-  Future<Color> showColorPickerDialog(BuildContext context) async {
-    Color color = await showDialog(
-        builder: (context) => AlertDialog(
-              title: const Text('色を選択してください'),
-              content: SingleChildScrollView(
-                child: ColorPicker(
-                  pickerColor: pickerColor,
-                  onColorChanged: changeColor,
-                  showLabel: true,
-                  pickerAreaHeightPercent: 0.8,
-                  //enableAlpha: false,
-                ),
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text('決定'),
-                  onPressed: () {
-                    return Navigator.of(context).pop(pickerColor);
-                  },
-                ),
-              ],
-            ),
-        context: context);
-    return color;
-  }
+  //Color pickerColor = Colors.red;
 
   @override
   Widget build(BuildContext context) {
@@ -95,12 +56,64 @@ class _MyHomePageState extends State<MyHomePage> {
     final errorcorrectlevel =
         context.select((MainModel model) => model.errorcorrectlevel);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('qrcode generator'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
+    Future showColorPicker() async {
+      Widget _colorButton(Color color) {
+        return Button(
+          child: Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(color: color),
+          ),
+          onPressed: () {
+            Navigator.pop(context, color);
+          },
+        );
+      }
+
+      var colors = [
+        _colorButton(Colors.red),
+        _colorButton(Colors.orange),
+        _colorButton(Colors.yellow),
+        _colorButton(Colors.purple),
+        _colorButton(Colors.blue),
+        _colorButton(Colors.green),
+        _colorButton(Colors.white),
+        _colorButton(Colors.grey),
+        _colorButton(Colors.black),
+      ];
+      final color = await showDialog(
+        context: context,
+        builder: (context) {
+          return ContentDialog(
+            title: const Text('色を選択'),
+            content: Column(
+              children: [
+                GridView.count(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.all(4),
+                  crossAxisCount: 6,
+                  crossAxisSpacing: 5.0,
+                  mainAxisSpacing: 5.0,
+                  children: colors,
+                )
+              ],
+            ),
+            actions: [
+              Button(
+                  child: const Text('キャンセル'),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  }),
+            ],
+          );
+        },
+      );
+      return color;
+    }
+
+    return ScaffoldPage(
+      content: Padding(
+        padding: const EdgeInsets.all(1.0),
         child: Row(
           children: [
             Flexible(
@@ -110,19 +123,22 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
+                    const Text(
+                      'QR Code Generator',
+                      style: TextStyle(fontSize: 30),
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
                     Row(
                       children: [
                         Expanded(
-                          child: TextField(
+                          child: TextBox(
                             maxLines: 1,
-                            decoration: const InputDecoration(
-                              hintText: '例）https://example.com',
-                              labelText: 'URL',
-                            ),
                             controller: urlController,
                           ),
                         ),
-                        ElevatedButton(
+                        Button(
                           onPressed: () {
                             context
                                 .read<MainModel>()
@@ -144,20 +160,19 @@ class _MyHomePageState extends State<MyHomePage> {
                         const SizedBox(
                           width: 10,
                         ),
-                        DropdownButton(
+                        Combobox(
                           value: dropdownValue,
+                          items: ['7%', '15%', '20%', '30%']
+                              .map((e) => ComboboxItem<String>(
+                                    value: e,
+                                    child: Text(e),
+                                  ))
+                              .toList(),
                           onChanged: (String? newValue) {
                             context
                                 .read<MainModel>()
                                 .updateErrorCorrectLevel(newValue!);
                           },
-                          items: <String>['7%', '15%', '25%', '30%']
-                              .map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
                         ),
                       ],
                     ),
@@ -177,11 +192,10 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                           ),
                         ),
-                        ElevatedButton(
+                        Button(
                             child: const Text('QRコードの色を選択'),
                             onPressed: () async {
-                              Color color =
-                                  await showColorPickerDialog(context);
+                              final color = await showColorPicker();
                               context.read<MainModel>().updateFgColor(color);
                             }),
                         const SizedBox(
@@ -198,11 +212,10 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                           ),
                         ),
-                        ElevatedButton(
+                        Button(
                             child: const Text('背景色を選択'),
                             onPressed: () async {
-                              Color color =
-                                  await showColorPickerDialog(context);
+                              final color = await showColorPicker();
                               context.read<MainModel>().updateBgColor(color);
                             })
                       ],
@@ -234,11 +247,29 @@ class _MyHomePageState extends State<MyHomePage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          TextButton(
+                          IconButton(
+                            icon: Icon(FluentIcons.save),
                             onPressed: () async {
-                              context.read<MainModel>().saveToFile(controller);
+                              await context
+                                  .read<MainModel>()
+                                  .saveToFile(controller);
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return ContentDialog(
+                                    title: const Text('保存'),
+                                    content: const Text('QRコードをファイルに保存しました。'),
+                                    actions: [
+                                      Button(
+                                          child: const Text('OK'),
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          })
+                                    ],
+                                  );
+                                },
+                              );
                             },
-                            child: const Text('画像を保存する'),
                           ),
                         ],
                       ),
