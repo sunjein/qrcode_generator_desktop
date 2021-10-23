@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -38,5 +39,28 @@ class MainModel extends ChangeNotifier {
       errorcorrectlevel = QrErrorCorrectLevel.H;
     }
     notifyListeners();
+  }
+
+  Future<void> saveToFile(controller) async {
+    String? outputFile = await FilePicker.platform.saveFile(
+      dialogTitle: 'ファイルの保存先を選択',
+      fileName: 'QRコード.png',
+    );
+
+    if (outputFile != null) {
+      // !応急処置！path_providerとかで正しくファイル名等を取得する
+      var filepathList = outputFile.split('/');
+      String filename = filepathList[filepathList.length - 1];
+      filepathList[filepathList.length - 1] = '';
+      var filepath = filepathList.join('/');
+      await controller.captureAndSave(filepath, fileName: filename);
+    }
+    //var _image = MemoryImage(image!);
+    //var picturesPath = await getPicturesPath();
+    //var thetaImage = await File(join(
+    //        picturesPath, 'theta_images', 'test'))
+    //    .create(recursive: true);
+    //await thetaImage
+    //    .writeAsBytes();
   }
 }
