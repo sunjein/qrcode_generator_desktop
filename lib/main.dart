@@ -44,13 +44,17 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController urlController = TextEditingController();
   final controller = ScreenshotController();
-  final dropdownValue = '7%';
+  List<String> qrtypeList = ['URL', 'WiFi登録', 'メール自動入力', 'SMS', '電話番号'];
 
   @override
   Widget build(BuildContext context) {
     final text = context.select((MainModel model) => model.text);
     final fgColor = context.select((MainModel model) => model.fgColor);
     final bgColor = context.select((MainModel model) => model.bgColor);
+    final eclDropdownValue =
+        context.select((MainModel model) => model.eclDropdownValue);
+    final qrtypeDropdownValue =
+        context.select((MainModel model) => model.qrtypeDropdownValue);
     final errorcorrectlevel =
         context.select((MainModel model) => model.errorcorrectlevel);
 
@@ -145,13 +149,42 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: TextStyle(fontSize: 30),
                     ),
                     const SizedBox(
-                      height: 20,
+                      height: 10,
+                    ),
+                    Row(
+                      children: [
+                        const Text(
+                          'QRコードの種類',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        SizedBox(
+                          width: 200,
+                          child: Combobox(
+                            value: qrtypeDropdownValue,
+                            items: qrtypeList
+                                .map((e) => ComboboxItem<String>(
+                                      value: e,
+                                      child: Text(e),
+                                    ))
+                                .toList(),
+                            onChanged: (String? newValue) {
+                              context.read<MainModel>().updateQrtype(newValue!);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
                     ),
                     Row(
                       children: [
                         Expanded(
                           child: TextBox(
-                            maxLines: 1,
+                            maxLines: 3,
                             controller: urlController,
                           ),
                         ),
@@ -177,19 +210,22 @@ class _MyHomePageState extends State<MyHomePage> {
                         const SizedBox(
                           width: 10,
                         ),
-                        Combobox(
-                          value: dropdownValue,
-                          items: ['7%', '15%', '20%', '30%']
-                              .map((e) => ComboboxItem<String>(
-                                    value: e,
-                                    child: Text(e),
-                                  ))
-                              .toList(),
-                          onChanged: (String? newValue) {
-                            context
-                                .read<MainModel>()
-                                .updateErrorCorrectLevel(newValue!);
-                          },
+                        SizedBox(
+                          width: 80,
+                          child: Combobox(
+                            value: eclDropdownValue,
+                            items: ['7%', '15%', '20%', '30%']
+                                .map((e) => ComboboxItem<String>(
+                                      value: e,
+                                      child: Text(e),
+                                    ))
+                                .toList(),
+                            onChanged: (String? newValue) {
+                              context
+                                  .read<MainModel>()
+                                  .updateErrorCorrectLevel(newValue!);
+                            },
+                          ),
                         ),
                       ],
                     ),
@@ -276,10 +312,15 @@ class _MyHomePageState extends State<MyHomePage> {
                           IconButton(
                             icon: const Icon(FluentIcons.save),
                             onPressed: () async {
-                              await context
+                              final saved = await context
                                   .read<MainModel>()
                                   .saveToFile(controller);
-                              showSimpleDialog('保存', 'QRコード画像の保存が完了しました。');
+                              if (saved) {
+                                showSimpleDialog('保存', 'QRコード画像の保存が完了しました。');
+                              } else {
+                                showSimpleDialog(
+                                    '保存されませんでした', 'QRコード画像の保存はキャンセルされました。');
+                              }
                             },
                           ),
                         ],

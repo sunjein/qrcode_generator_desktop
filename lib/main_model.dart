@@ -1,13 +1,17 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:path/path.dart';
 
 class MainModel extends ChangeNotifier {
   String text = '';
   Color fgColor = Colors.black;
   Color bgColor = Colors.white;
-  String dropdownValue = '15%';
+  String eclDropdownValue = '15%';
   int errorcorrectlevel = QrErrorCorrectLevel.M;
+  String qrtypeDropdownValue = 'URL';
 
   void updateText(String inputtext) {
     text = inputtext;
@@ -25,7 +29,7 @@ class MainModel extends ChangeNotifier {
   }
 
   void updateErrorCorrectLevel(String newValue) {
-    dropdownValue = newValue;
+    eclDropdownValue = newValue;
     if (newValue == '7%') {
       errorcorrectlevel = QrErrorCorrectLevel.L;
     }
@@ -41,25 +45,21 @@ class MainModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> saveToFile(controller) async {
-    String? outputFile = await FilePicker.platform.saveFile(
+  void updateQrtype(String newValue) {
+    qrtypeDropdownValue = newValue;
+    notifyListeners();
+  }
+
+  Future<bool> saveToFile(controller) async {
+    String? outputFilePath = await FilePicker.platform.saveFile(
       dialogTitle: 'ファイルの保存先を選択',
       fileName: 'QRコード.png',
     );
-    if (outputFile != null) {
-      // !応急処置！path_providerとかで正しくファイル名等を取得する
-      var filepathList = outputFile.split('/');
-      String filename = filepathList[filepathList.length - 1];
-      filepathList[filepathList.length - 1] = '';
-      var filepath = filepathList.join('/');
-      await controller.captureAndSave(filepath, fileName: filename);
+    if (outputFilePath != null) {
+      await controller.captureAndSave(dirname(outputFilePath),
+          fileName: basename(outputFilePath));
+      return true;
     }
-    //var _image = MemoryImage(image!);
-    //var picturesPath = await getPicturesPath();
-    //var thetaImage = await File(join(
-    //        picturesPath, 'theta_images', 'test'))
-    //    .create(recursive: true);
-    //await thetaImage
-    //    .writeAsBytes();
+    return false;
   }
 }
